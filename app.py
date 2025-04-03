@@ -12,11 +12,9 @@ app = Flask(__name__)
 CORS(app)
 
 model_path = os.path.join("model", "smartinterest_model_phase2.pkl")
-label_encoder_path = os.path.join("model", "label_encoder.pkl")
 roadmap_path = "roadmap_resources.json"
 
 model = joblib.load(model_path)
-label_encoder = joblib.load(label_encoder_path)
 
 with open(roadmap_path, "r") as f:
     roadmaps = json.load(f)
@@ -38,7 +36,8 @@ def store_user():
             "scores": {},  
             "projects": [],  
             "predicted_interest": None,
-            "roadmap": None
+            "roadmap": None,
+            "profilePhoto":"https://i.pravatar.cc/150?img=64"
         })
     return jsonify({"message": "User stored successfully!"})
 
@@ -88,6 +87,11 @@ def predict_interest():
     if not data:
         return jsonify({"error": "No input data provided"}), 400
     try:
+        level_mapping = {'Beginner': 1, 'Intermediate': 2, 'Advanced': 3}
+        domain_mapping = {'AI': 0, 'Web Development': 1, 'Machine Learning': 2, 'Cybersecurity': 3, 'Data Science': 4, 'Robotics': 5, 'Game Development': 6}
+
+        reversed_mapping = {value: key for key, value in domain_mapping.items()}
+
         input_data = np.array([
             float(data["Operating System"]),
             float(data["DSA"]),
@@ -96,15 +100,21 @@ def predict_interest():
             float(data["Machine Learning"]),
             float(data["Data Analytics"]),
             int(data["Project 1"]),
+            int(level_mapping[data["Level1"]]),
             int(data["Project 2"]),
+            int(level_mapping[data["Level2"]]),
             int(data["Project 3"]),
+            int(level_mapping[data["Level3"]]),
             int(data["Project 4"]),
+            int(level_mapping[data["Level4"]]),
         ]).reshape(1, -1)
+        print(input_data)
         prediction = model.predict(input_data)[0]
-        interest_label = label_encoder.inverse_transform([prediction])[0]
-        roadmap_info = roadmaps.get(interest_label, {"description": "No roadmap available.", "levels": {}})
+        interest_domain=reversed_mapping[prediction]
+        print("Predicted Interest:", reversed_mapping[prediction])
+        roadmap_info = roadmaps.get(interest_domain, {"description": "No roadmap available.", "levels": {}})
         return jsonify({
-            "predicted_interest": interest_label,
+            "predicted_interest": interest_domain,
             "roadmap": roadmap_info
         })
     except Exception as e:
@@ -177,24 +187,22 @@ def update_user_data():
         for subject in subjects:
             if subject not in updated_scores:
                 updated_scores[subject] = []
-            updated_scores[subject].append(float(data['scores'][subject]*10))
+            updated_scores[subject].append(float(data['formdata'][subject]*10))
             if len(updated_scores[subject]) > 3:
                 updated_scores[subject] = updated_scores[subject][-3:]
         updated_projects = [
-            data['formdata']["Project 1"],
-            data['formdata']["Project 2"],
-            data['formdata']["Project 3"],
-            data['formdata']["Project 4"],
+            [data['formdata']["Project 1"],data['formdata']["Level1"]],
+            [data['formdata']["Project 2"],data['formdata']["Level2"]],
+            [data['formdata']["Project 3"],data['formdata']["Level3"]],
+            [data['formdata']["Project 4"],data['formdata']["Level4"]],
         ]
         updated_projects = [p for p in updated_projects if p]
-        interest_label = data['predicted_interest']['predicted_interest']
-        updated_interests = user.get("predicted_interest", [])
-        updated_interests.append(interest_label)
+        interest_label = data['predicted_interest']
+        print("Hh")
+        updated_interests=interest_label
         print(updated_scores)
         print(updated_projects)
         print(updated_interests)
-        if len(updated_interests) > 2:
-            updated_interests = updated_interests[-2:]
         users_collection.update_one(
             {"uid": user_id},
             {"$set": {

@@ -11,14 +11,6 @@ from db import users_collection
 app = Flask(__name__)
 CORS(app)
 
-model_path = os.path.join("model", "smartinterest_model_phase2.pkl")
-roadmap_path = "roadmap_resources.json"
-
-model = joblib.load(model_path)
-
-with open(roadmap_path, "r") as f:
-    roadmaps = json.load(f)
-
 @app.route("/store_user", methods=["POST"])
 def store_user():
     data = request.json
@@ -51,38 +43,13 @@ def get_user_data():
         return jsonify({"error": "User not found"}), 404
     return jsonify(user_data)
 
-@app.route("/update_marks", methods=["POST"])
-def update_marks():
-    data = request.json
-    user_id = data.get("uid")
-    subject = data.get("subject")
-    new_mark = data.get("mark")
-    if not user_id or not subject or new_mark is None:
-        return jsonify({"error": "Missing required data"}), 400
-    user = users_collection.find_one({"uid": user_id})
-    if user:
-        existing_marks = user.get("marks", {}).get(subject, [])
-        updated_marks = (existing_marks + [new_mark])[-3:]  # Keep last 3
-        users_collection.update_one({"uid": user_id}, {"$set": {f"marks.{subject}": updated_marks}})
-        return jsonify({"message": "Marks updated successfully!"})
-    return jsonify({"error": "User not found"}), 404
-
-@app.route("/store_prediction", methods=["POST"])
-def store_prediction():
-    data = request.json
-    user_id = data.get("uid")
-    predicted_interest = data.get("predicted_interest")
-    roadmap = data.get("roadmap")
-    if not user_id or not predicted_interest or not roadmap:
-        return jsonify({"error": "Missing required data"}), 400
-    users_collection.update_one(
-        {"uid": user_id},
-        {"$set": {"predicted_interest": predicted_interest, "roadmap": roadmap}}
-    )
-    return jsonify({"message": "Interest prediction stored successfully!"})
-
 @app.route("/predict", methods=["POST"])
 def predict_interest():
+    roadmap_path = "roadmap_resources.json"
+    with open(roadmap_path, "r") as f:
+        roadmaps = json.load(f)
+    model_path = os.path.join("model", "smartinterest_model_phase2.pkl")
+    model = joblib.load(model_path)
     data = request.get_json()
     if not data:
         return jsonify({"error": "No input data provided"}), 400
@@ -135,6 +102,9 @@ def store_project():
 
 @app.route("/roadmaps", methods=["GET"])
 def get_roadmaps():
+    roadmap_path = "roadmap_resources.json"
+    with open(roadmap_path, "r") as f:
+        roadmaps = json.load(f)
     return jsonify(roadmaps)
 
 with open("questions.json", "r") as f:

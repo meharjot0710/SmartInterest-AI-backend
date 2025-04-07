@@ -1,4 +1,3 @@
-# This is backend
 from flask import Flask, request, jsonify
 from flask_cors import CORS  
 import joblib
@@ -75,10 +74,8 @@ def predict_interest():
             int(data["Project 4"]),
             int(level_mapping[data["Level4"]]),
         ]).reshape(1, -1)
-        print(input_data)
         prediction = model.predict(input_data)[0]
         interest_domain=reversed_mapping[prediction]
-        print("Predicted Interest:", reversed_mapping[prediction])
         roadmap_info = roadmaps.get(interest_domain, {"description": "No roadmap available.", "levels": {}})
         return jsonify({
             "predicted_interest": interest_domain,
@@ -107,11 +104,10 @@ def get_roadmaps():
         roadmaps = json.load(f)
     return jsonify(roadmaps)
 
-with open("questions.json", "r") as f:
-    questions_data = json.load(f)
-
 @app.route("/get_questions", methods=["GET"])
 def get_questions():
+    with open("questions.json", "r") as f:
+        questions_data = json.load(f)
     subject = request.args.get("subject")
     if subject in questions_data:
         questions = questions_data[subject]
@@ -122,6 +118,8 @@ def get_questions():
 
 @app.route("/submit_answers", methods=["POST"])
 def submit_answers():
+    with open("questions.json", "r") as f:
+        questions_data = json.load(f)
     data = request.get_json()
     subject = data.get("subject")
     user_answers = data.get("answers")  
@@ -141,7 +139,6 @@ def submit_answers():
 @app.route("/update_user_data", methods=["POST"])
 def update_user_data():
     data = request.get_json()
-    print("Received Data:", data)
     if not data:
         return jsonify({"error": "No input data provided"}), 400
     user_id = data.get("uid")
@@ -168,11 +165,7 @@ def update_user_data():
         ]
         updated_projects = [p for p in updated_projects if p]
         interest_label = data['predicted_interest']
-        print("Hh")
         updated_interests=interest_label
-        print(updated_scores)
-        print(updated_projects)
-        print(updated_interests)
         users_collection.update_one(
             {"uid": user_id},
             {"$set": {

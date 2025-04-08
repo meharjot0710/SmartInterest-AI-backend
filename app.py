@@ -44,9 +44,6 @@ def get_user_data():
 
 @app.route("/predict", methods=["POST"])
 def predict_interest():
-    roadmap_path = "roadmap_resources.json"
-    with open(roadmap_path, "r") as f:
-        roadmaps = json.load(f)
     model_path = os.path.join("model", "smartinterest_model_phase2.pkl")
     model = joblib.load(model_path)
     data = request.get_json()
@@ -55,9 +52,7 @@ def predict_interest():
     try:
         level_mapping = {'Beginner': 1, 'Intermediate': 2, 'Advanced': 3}
         domain_mapping = {'AI': 0, 'Web Development': 1, 'Machine Learning': 2, 'Cybersecurity': 3, 'Data Science': 4, 'Robotics': 5, 'Game Development': 6}
-
         reversed_mapping = {value: key for key, value in domain_mapping.items()}
-
         input_data = np.array([
             float(data["Operating System"]),
             float(data["DSA"]),
@@ -76,10 +71,8 @@ def predict_interest():
         ]).reshape(1, -1)
         prediction = model.predict(input_data)[0]
         interest_domain=reversed_mapping[prediction]
-        roadmap_info = roadmaps.get(interest_domain, {"description": "No roadmap available.", "levels": {}})
         return jsonify({
-            "predicted_interest": interest_domain,
-            "roadmap": roadmap_info
+            "predicted_interest": interest_domain
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500

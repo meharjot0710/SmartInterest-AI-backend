@@ -47,16 +47,13 @@ def predict_interest():
     model_path = os.path.join("model", "smartinterest_model_phase2.pkl")
     model = joblib.load(model_path)
     data = request.get_json()
-    if not data:
-        return jsonify({"error": "No input data provided"}), 400
-    try:
-        level_mapping = {'Beginner': 1, 'Intermediate': 2, 'Advanced': 3}
-        domain_mapping = {'AI': 0, 'Web Development': 1, 'Machine Learning': 2, 'Cybersecurity': 3, 'Data Science': 4, 'Robotics': 5, 'Game Development': 6}
-        reversed_mapping = {value: key for key, value in domain_mapping.items()}
-        input_data = np.array([
-            float(data["Operating System"]),
-            float(data["DSA"]),
-            float(data["Frontend"]),
+    level_mapping = {'Beginner': 1, 'Intermediate': 2, 'Advanced': 3}
+    domain_mapping = {'AI': 0, 'Web Development': 1, 'Machine Learning': 2, 'Cybersecurity': 3, 'Data Science': 4, 'Robotics': 5, 'Game Development': 6}
+    reversed_mapping = {value: key for key, value in domain_mapping.items()}
+    input_data = np.array([
+    float(data["Operating System"]),
+    float(data["DSA"]),
+    float(data["Frontend"]),
             float(data["Backend"]),
             float(data["Machine Learning"]),
             float(data["Data Analytics"]),
@@ -68,14 +65,12 @@ def predict_interest():
             int(level_mapping[data["Level3"]]),
             int(data["Project 4"]),
             int(level_mapping[data["Level4"]]),
-        ]).reshape(1, -1)
-        prediction = model.predict(input_data)[0]
-        interest_domain=reversed_mapping[prediction]
-        return jsonify({
-            "predicted_interest": interest_domain
-        })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    ]).reshape(1, -1)
+    prediction = model.predict(input_data)[0]
+    interest_domain=reversed_mapping[prediction]
+    return jsonify({
+        "predicted_interest": interest_domain
+    })
 
 @app.route("/store_project", methods=["POST"])
 def store_project():

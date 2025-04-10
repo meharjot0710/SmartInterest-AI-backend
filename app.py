@@ -47,9 +47,6 @@ def predict_interest():
     model_path = os.path.join("model", "smartinterest_model_phase2.pkl")
     model = joblib.load(model_path)
     data = request.get_json()
-    level_mapping = {'Beginner': 1, 'Intermediate': 2, 'Advanced': 3}
-    domain_mapping = {'AI': 0, 'Web Development': 1, 'Machine Learning': 2, 'Cybersecurity': 3, 'Data Science': 4, 'Robotics': 5, 'Game Development': 6}
-    reversed_mapping = {value: key for key, value in domain_mapping.items()}
     input_data = np.array([
         float(data["Operating System"]),
         float(data["DSA"]),
@@ -58,18 +55,17 @@ def predict_interest():
         float(data["Machine Learning"]),
         float(data["Data Analytics"]),
         int(data["Project 1"]),
-        int(level_mapping[data["Level1"]]),
+        int(data["Level1"]),
         int(data["Project 2"]),
-        int(level_mapping[data["Level2"]]),
+        int(data["Level2"]),
         int(data["Project 3"]),
-        int(level_mapping[data["Level3"]]),
+        int(data["Level3"]),
         int(data["Project 4"]),
-        int(level_mapping[data["Level4"]]),
+        int(data["Level4"]),
     ]).reshape(1, -1)
     prediction = model.predict(input_data)[0]
-    interest_domain=reversed_mapping[prediction]
     return jsonify({
-        "predicted_interest": interest_domain
+        "predicted_interest": prediction
     })
 
 @app.route("/store_project", methods=["POST"])

@@ -47,6 +47,7 @@ def predict_interest():
     model_path = os.path.join("model", "smartinterest_model_phase2.pkl")
     model = joblib.load(model_path)
     data = request.get_json()
+    print(data)
     input_data = np.array([
         float(data["Operating System"]),
         float(data["DSA"]),
@@ -63,9 +64,20 @@ def predict_interest():
         int(data["Project 4"]),
         int(data["Level4"]),
     ]).reshape(1, -1)
+    print(input_data)
     prediction = model.predict(input_data)[0]
+    print(prediction)
+    domains=["AI",
+  "Web Development",
+  "Machine Learning",
+  "Cybersecurity",
+  "Data Science",
+  "Robotics",
+  "Game Development"]
+    pred = domains[prediction]
+    print(pred)
     return jsonify({
-        "predicted_interest": prediction
+        "predicted_interest": pred
     })
 
 @app.route("/store_project", methods=["POST"])
